@@ -1,0 +1,57 @@
+extends layout
+
+block content
+  div.lable
+    div.h4_tb
+      h4.h4 Users
+      -var user_key = ["user_id","user_account","user_password"]
+      table.table
+        thead  
+          tr 
+          each key in user_key
+            th.th=key
+        tbody
+        each row in user_rows
+          tr.tr
+            each key in user_key
+              td.td=row[key]
+    div.h4_tb
+      h4.h4 Orders
+      -var order_key = ["user_id","order_id"]
+      table.table
+        thead  
+          tr 
+          each key in order_key
+            th.th=key
+        tbody
+        each row in order_rows
+          tr.tr
+            each key in order_key
+              td.td=row[key]
+    div.h4_tb
+      h4.h4 OrderDetail
+      -var orderdetail_key = ["order_id","item_num","item_id"]
+      table.table
+        thead  
+          tr
+          each key in orderdetail_key
+            th.th=key
+        tbody
+        each row in orderdetail_rows
+          tr.tr
+            each key in orderdetail_key
+              td.td=row[key]
+    div.h4_tb
+      h4.h4 Items
+      -var item_key = ["item_id","item_name","item_price"]
+      table.table
+        thead  
+          tr
+          each key in item_key
+            th.th=key
+        tbody
+        each row in item_rows
+          tr.tr
+            each key in item_key
+              td.td=row[key]
+          
