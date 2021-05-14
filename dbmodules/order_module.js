@@ -16,7 +16,7 @@ function all (){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"all")
-                    reject({error:error});
+                    resolve({error:error});
                 }else{
                     resolve({ data : JSON.stringify(rowPacket) });    
                 }
@@ -30,7 +30,7 @@ function all_detail (){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"all")
-                    reject({error:error});
+                    resolve({error:error});
                 }else{
                     resolve({ data : JSON.stringify(rowPacket) });    
                 }
@@ -46,13 +46,15 @@ function del(order_id){
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del")
-                    reject({error: error})
+                    resolve({error: error})
                 }else{
                     if(okPacket.affectedRows == 0){
                         //console.log("Item id: "+item_id+" is not exist")
-                        resolve({msg: `Order: { id: ${order_id} } is not exist`})
+                        let msg = {msg: `Order: { id: ${order_id} } is not exist`}
+                        resolve(result(msg))
                     }else{
-                        resolve({msg: `Success Delete Order: { id: ${order_id} }`})
+                        let msg = {msg: `Success Delete Order: { id: ${order_id} }`}
+                        resolve(result(msg))
                     }
                 }
             })
@@ -69,14 +71,15 @@ function add(user_id, details){
                 //code ER_NO_REFERENCED_ROW_2
                 if(error){
                     error_show(error,"add")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     //console.log(okPacket.insertId)
                     add_details(okPacket.insertId,details,db)
                     .then((detail_resolve)=>{
+                        let msg = {msg:detail_resolve}
                         //console.log("detail_resolve:")
                         //console.log(detail_resolve)
-                        resolve((detail_resolve))
+                        resolve(result(msg))
                     })
                 }
         })     
@@ -179,7 +182,7 @@ function del_all(){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"del_all_count")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log(rowPacket)
                     console.log(rowPacket[0]['COUNT(*)'] + " order exist")
@@ -191,7 +194,7 @@ function del_all(){
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del_all_delete")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log("Success Delete "+okPacket.affectedRows+" orders")
                     delMsg += `Success Delete ${okPacket.affectedRows} orders`
@@ -202,11 +205,11 @@ function del_all(){
             (error)=>{
                 if(error){
                     error_show(error,"del_all_alter")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log("Success Alter AUTO_INCREMENT to 1")
                     delMsg += "Success Alter orders_table AUTO_INCREMENT to 1"
-                    resolve(delMsg)
+                    resolve(result(delMsg))
                 }
             })   
     })
@@ -220,13 +223,15 @@ function del_detail(order_id,item_id){
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del_detail")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     if(okPacket.affectedRows == 0){
+                        let msg = {msg: `Order: { id: ${order_id} }, Item: { id: ${item_id} } is not exist`}
                         //console.log("(Order_id: "+order_id+" , Item_id: "+item_id+") is not exist")
-                        resolve({msg: `Order: { id: ${order_id} }, Item: { id: ${item_id} } is not exist`})
+                        resolve(msg)
                     }else{
-                        resolve({msg: `Success Delete Order: { id: ${order_id} }, Item: { id: ${item_id} }`})
+                        let msg = {msg: `Success Delete Order: { id: ${order_id} }, Item: { id: ${item_id} }`}
+                        resolve(result_detail(msg))
                     }
                 } 
         })
@@ -237,9 +242,9 @@ function update_detail(order_id,item_id,update_num){
     return new Promise((resolve,reject)=>{
         if(update_num<0){
             console.log("Invalid update num")
-            reject({error:"Invalid update num"})
+            resolve({error:"Invalid update num"})
         }else if(update_num == 0){
-            del_detail(order_id,item_id).then((del_detail_resolve)=>{resolve=del_detail_resolve})
+            del_detail(order_id,item_id).then((del_detail_resolve)=>{resolve(del_detail_resolve)})
         }else{
             let query_params = [update_num, order_id, item_id]
             db.query(
@@ -248,11 +253,12 @@ function update_detail(order_id,item_id,update_num){
                 (error,okPacket)=>{
                     if(error){
                         error_show(error,"update_detail")
-                        reject({error:error})
+                        resolve({error:error})
                     }else{
                         if(okPacket.affectedRows == 0){
+                            let msg = {msg: `Success Update Order: { id: ${order_id} }, Item: { id: ${item_id} , num: ${update_num}}`}
                             //console.log("(Order_id: "+order_id+" , Item_id: "+item_id+") is not exist")
-                            resolve({msg: `Success Update Order: { id: ${order_id} }, Item: { id: ${item_id} , num: ${update_num}}`})
+                            resolve(result_detail(msg))
                         }
                     }
                 })
@@ -267,10 +273,10 @@ function search_ByUser (user_id){
         (error,rowPacket)=>{
             if(error){
                 error_show(error,"search_ByUser")
-                reject({error:error})
+                resolve({error:error})
             }else{
                 //console.log(rowPacket);
-                resolve(rowPacket)
+                resolve({data : JSON.stringify(rowPacket)})
             }
         })
     })
@@ -287,8 +293,11 @@ function update(order_id,new_order_id){
             //code: 'ER_DUP_ENTRY',errno: 1062,sqlMessage: "Duplicate entry '12' for key 'orders_table.PRIMARY'",
             if(error){
                 error_show(error,"update")
+                resolve({error:error})
             }else if(okPacket.affectedRows == 0){
-                console.log("Order_id: "+order_id+" is not exist")
+                let msg = `Order_id: ${order_id} is not exist`
+                //console.log("Order_id: "+order_id+" is not exist")
+                resolve(msg)
             }
         })
 }
@@ -296,12 +305,35 @@ function search (order_id){
     let query_params = [order_id]
     db.query("SELECT * FROM orders_table WHERE order_id = ?;",
     query_params,
-    (error,rows)=>{
-        error_show(error,"show")
-        console.log(rows);    
+    (error,rowPacket)=>{
+        if(error){
+            error_show(error,"show")
+            resolve({error:error})
+        }else{
+            resolve({data : JSON.stringify(rowPacket)})
+        }
     })
 }
-
+async function result(msg){
+    try{
+        let data = await all()
+        data = {...data, msg}
+        return data
+    }catch(error){
+        return error
+    }
+    //return data
+}
+async function result_detail(msg){
+    try{
+        let data = await all_detail()
+        data = {...data, msg}
+        return data
+    }catch(error){
+        return error
+    }
+    //return data
+}
 function error_show(error,type){
     if(error){
         console.log("order."+type +"() error:\n"+ error)

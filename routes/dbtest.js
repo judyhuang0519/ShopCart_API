@@ -25,7 +25,12 @@ router.get('/',async function(req, res, next) {
     console.log("getdb request")
     //table_show(res, "items_table")
     //console.log("a1")
-    item.add("item1",10)
+    //item.add("item1",10)
+    let mode
+    if(mode){
+      console.log("Q")
+    }
+    item.search_params()
     //order.del_all()
     /*await order.add(8,{
       '0': { item_id: 10, item_name: 'item5', item_price: 50, num: 2 },
