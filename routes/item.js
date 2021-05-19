@@ -23,8 +23,8 @@ db.connect((error)=>{
     console.log("Item DB Success")
   }
 });
-const table = "item"
-router.get('/all', function(req, res, next) {
+//const table = "item"
+/*router.get('/all', function(req, res, next) {
   console.log("get Item request")
   item.all()
   .then((items)=>{
@@ -33,11 +33,12 @@ router.get('/all', function(req, res, next) {
   })
 });
 /* GET users listing. */
-router.post('/add',function(req, res, next){
+
+router.post('/',function(req, res, next){
   console.log("item add request")
   console.log(req.body)
-  let name = req.body.item_name
-  let price = req.body.item_price
+  let name = req.body.name
+  let price = req.body.price
   if( (isNaN(Number(price))) || (Number(price)<=0) || (`${Number(price)}`.length >9)){
     res.json({msg:"Invalid price"})
   }else if (name == ""||!name){
@@ -50,70 +51,47 @@ router.post('/add',function(req, res, next){
   } 
   //next()
 })
-router.get('/del', function(req, res, next) {
-  console.log("item del request")
-  console.log('#')
+
+router.get('/', function(req, res, next) {
+  console.log("item search request")
   console.log(req.query)
-  console.log('#')
-  if(req.query){
-    console.log("%")
-    item.del(req.query)
+  if(Object.keys(req.query).length!=0){
+    item.search(req.query)
     .then((result)=>{
       res.json(result)
     })
   }else{
-    item.del_all()
+    item.all()
     .then((result)=>{
       res.json(result)
     })
   }
-  
-  /*if(req.query.id){
+
+});
+//
+router.delete('/', function(req, res, next) {
     console.log("item del request")
-    item.del(req.query.id)
-    .then((result)=>{
-      res.json(result)
-    })
-  }else{
-    console.log("item delall request")
-    item.del_all().then((result)=>{
-      res.json(result)
-    })
-  }*/
+    console.log(req.query)
+    if(Object.keys(req.query).length!=0){
+      console.log("%")
+      item.del(req.query)
+      .then((result)=>{
+        res.json(result)
+      })
+    }else{
+      item.del_all()
+      .then((result)=>{
+        res.json(result)
+      })
+   }
 });
-router.get('/search', function(req, res, next) {
-  console.log("item search request")
-  console.log(req.query)
-  console.log(" request")
-  item.search(req.query)
-  .then((result)=>{
-    res.json(result)
-  })
-  /*if(req.query.id){
-    console.log("item search id request")
-    console.log(req.query.id)
-    item.del(req.query.id)
-    .then((result)=>{
-      res.json(result)
-    })
-  }else if (req.query.name){
-    console.log("item search name request")
-    console.log(req.query.name)
-    item.search(req.query.name).then((result)=>{
-      res.json(result)
-    })
-  }else if (req.query.price){
-    console.log("item search price request")
-    console.log(req.query.price)
-  }*/
-  return next()
-});
-router.post('/update',function(req, res, next){
+//
+router.patch('/',function(req, res, next){
   console.log("item update request")
   console.log(req.body)
-  let id = req.body.item_id
-  let name = req.body.new_name
-  let price = req.body.new_price
+  let id = req.body.id
+  let name = req.body.name
+  let price = req.body.price
   if( (isNaN(Number(price))) || (Number(price)<=0) || (`${Number(price)}`.length >9)){
     //console.log((isNaN(Number(price))))
     res.json({msg:"Invalid price"})
@@ -125,16 +103,18 @@ router.post('/update',function(req, res, next){
       res.json(result)
     })
   } 
-  //next()
+
 })
-router.post("/",function(req, res,next) {
+
+
+/*router.post("/",function(req, res,next) {
   console.log("postItems request");
   console.log(req.body);
 
   order.add(1,req.body)
  
   res.json({PS:00}); 
-});
+});*/
 
 
 router.use(function(req,res,next){
