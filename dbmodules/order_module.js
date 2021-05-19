@@ -2,6 +2,7 @@ var db
 function set(connect_db) {
     db = connect_db
 }
+const table ="order"
 function show  (){
     db.query("SELECT * FROM orders_table;",
     (error,rows)=>{
@@ -16,7 +17,7 @@ function all (){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"all")
-                    reject({error:error});
+                    resolve({error:error});
                 }else{
                     resolve({ data : JSON.stringify(rowPacket) });    
                 }
@@ -30,29 +31,33 @@ function all_detail (){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"all")
-                    reject({error:error});
+                    resolve({error:error});
                 }else{
                     resolve({ data : JSON.stringify(rowPacket) });    
                 }
             })
     })
 }
-function del(order_id){
+function del(query_data){
     return new Promise((resolve,reject)=>{
-        let query_params = [order_id]
+        let params_data = get_query(query_data)
+        let query_params = [`${params(params_data)}`]
+        console.log(query_params)
+        //let query_params = [order_id]
         db.query(
-            "DELETE FROM orders_table WHERE order_id= ?;",
-            query_params,
+            "DELETE FROM orders_table "+ query_params,
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del")
-                    reject({error: error})
+                    resolve({error: error})
                 }else{
                     if(okPacket.affectedRows == 0){
                         //console.log("Item id: "+item_id+" is not exist")
-                        resolve({msg: `Order: { id: ${order_id} } is not exist`})
+                        let msg = {msg: `Order: { id:  } is not exist`}
+                        resolve(result(`Order: { id:  } is not exist`))
                     }else{
-                        resolve({msg: `Success Delete Order: { id: ${order_id} }`})
+                        let msg = {msg: `Success Delete Order: { id:  }`}
+                        resolve(result(`Success Delete Order: { id:  }`))
                     }
                 }
             })
@@ -69,14 +74,17 @@ function add(user_id, details){
                 //code ER_NO_REFERENCED_ROW_2
                 if(error){
                     error_show(error,"add")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     //console.log(okPacket.insertId)
                     add_details(okPacket.insertId,details,db)
-                    .then((detail_resolve)=>{
-                        //console.log("detail_resolve:")
-                        //console.log(detail_resolve)
-                        resolve((detail_resolve))
+                    .then((detail_resolve)=>{console.log("%%")
+                        let msg = {msg:detail_resolve}
+                        
+                        resolve(result(detail_resolve))
+                    }).catch((e)=>{
+                        console.log("*")
+                        console.log(e)
                     })
                 }
         })     
@@ -86,20 +94,22 @@ function add(user_id, details){
 async function add_details(order_id, details){
     let addMsg=""
     let addCount=0
+    console.log(details)
     for (row in details){
         try {
-            addMsg += await add_orderdetail(order_id, details[row].item_id, details[row].num)
+            addMsg += await add_orderdetail(order_id, details[row].item_id, details[row].item_num)
             addCount++
         } catch (error) {
             addMsg+=error
         }
     }
     addMsg += `Success Adding Order: { id: ${order_id} } ${addCount} details`
-    return Promise.resolve(addMsg)
+    return Promise.resolve(result_detail(addMsg))
 }
 
 function add_orderdetail(order_id,item_id,item_num){
     return new Promise ((resolve,reject)=>{
+        console.log(item_id)
         let query_params = [order_id, item_id, item_num]
         db.query(
             "INSERT INTO ordersdetails (order_id,item_id,item_num) value(?,?,?);",
@@ -179,7 +189,7 @@ function del_all(){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"del_all_count")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log(rowPacket)
                     console.log(rowPacket[0]['COUNT(*)'] + " order exist")
@@ -191,7 +201,7 @@ function del_all(){
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del_all_delete")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log("Success Delete "+okPacket.affectedRows+" orders")
                     delMsg += `Success Delete ${okPacket.affectedRows} orders`
@@ -202,75 +212,142 @@ function del_all(){
             (error)=>{
                 if(error){
                     error_show(error,"del_all_alter")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log("Success Alter AUTO_INCREMENT to 1")
                     delMsg += "Success Alter orders_table AUTO_INCREMENT to 1"
-                    resolve(delMsg)
+                    resolve(result(delMsg))
                 }
             })   
     })
 }
-function del_detail(order_id,item_id){
+function del_detail(query_data){
     return new Promise((resolve,reject)=>{
-        let query_params = [order_id,item_id]
+        let params_data = get_query(query_data)
+        let query_params = [`${params(params_data)}`]
+        //let query_params = [order_id,item_id]
+        console.log(query_params)
+    
         db.query(
-            "DELETE FROM ordersdetails WHERE order_id= ? AND item_id= ?;",
-            query_params,
+            "DELETE FROM ordersdetails "+query_params,
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del_detail")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     if(okPacket.affectedRows == 0){
+                        let msg = {msg: `Order: { id: ${query_data.order_id} }, Item: { id: ${query_data.item_id} } is not exist`}
                         //console.log("(Order_id: "+order_id+" , Item_id: "+item_id+") is not exist")
-                        resolve({msg: `Order: { id: ${order_id} }, Item: { id: ${item_id} } is not exist`})
+                        resolve(`Order: { id: ${query_data.order_id} }, Item: { id: ${query_data.item_id} } is not exist`)
                     }else{
-                        resolve({msg: `Success Delete Order: { id: ${order_id} }, Item: { id: ${item_id} }`})
+                        let msg = {msg: `Success Delete Order: { id: ${query_data.order_id} }, Item: { id: ${query_data.item_id} }`}
+                        resolve(result_detail(`Success Delete Order: { id: ${query_data.order_id} }, Item: { id: ${query_data.item_id} }`))
                     }
                 } 
         })
     })
 }
-
+function del_detail_all(){
+    return new Promise((resolve,reject)=>{
+        let delMsg=""
+        db.query(
+            "SELECT COUNT(*) FROM ordersdetails;",
+            //query_params,
+            (error,rowPacket)=>{
+                if(error){
+                    error_show(error,"del_all_count")
+                    resolve({error:error})
+                }else{
+                    console.log(rowPacket)
+                    console.log(rowPacket[0]['COUNT(*)'] + " order exist")
+                    delMsg += `${rowPacket[0]['COUNT(*)']} orders exist`
+                }
+            })
+        db.query(
+            "DELETE FROM ordersdetails;",
+            (error,okPacket)=>{
+                if(error){
+                    error_show(error,"del_all_delete")
+                    resolve({error:error})
+                }else{
+                    console.log("Success Delete "+okPacket.affectedRows+" orders")
+                    delMsg += `Success Delete ${okPacket.affectedRows} orders`
+                }
+            })
+        db.query(
+            "ALTER TABLE orders_table AUTO_INCREMENT = 1;",
+            (error)=>{
+                if(error){
+                    error_show(error,"del_all_alter")
+                    resolve({error:error})
+                }else{
+                    console.log("Success Alter AUTO_INCREMENT to 1")
+                    delMsg += "Success Alter orders_table AUTO_INCREMENT to 1"
+                    resolve(result(delMsg))
+                }
+            })   
+    })
+}
+async function update (order_id,update_data){
+    let updateMsg=""
+    let updateCount=0
+    console.log(update_data)
+    for(row in update_data){
+        try {
+            updateMsg += await update_detail(Number(order_id), update_data[row].item_id, update_data[row].item_num)
+            updateCount++
+        } catch (error) {
+            updateMsg+=error
+        }
+    }
+    
+    updateMsg += `Success Adding Order: { id: ${order_id} } ${updateCount} details`
+    return Promise.resolve(result_detail(updateMsg))
+    
+}
 function update_detail(order_id,item_id,update_num){
     return new Promise((resolve,reject)=>{
-        if(update_num<0){
+        console.log(item_id)
+        if(update_num<0||!update_num||!item_id){
             console.log("Invalid update num")
-            reject({error:"Invalid update num"})
+            reject("Invalid update num")
         }else if(update_num == 0){
-            del_detail(order_id,item_id).then((del_detail_resolve)=>{resolve=del_detail_resolve})
+            del_detail(order_id,item_id).then(()=>{resolve()})
         }else{
+  
             let query_params = [update_num, order_id, item_id]
+            console.log(query_params)
             db.query(
                 "UPDATE ordersdetails SET item_num = ? WHERE order_id = ? AND item_id = ?;",
                 query_params,
                 (error,okPacket)=>{
                     if(error){
                         error_show(error,"update_detail")
-                        reject({error:error})
+                        reject(`Item: { id: ${item_id} } is not exist\n`)
                     }else{
-                        if(okPacket.affectedRows == 0){
+                        
+                            let msg = {msg: `Success Update Order: { id: ${order_id} }, Item: { id: ${item_id} , num: ${update_num}}`}
                             //console.log("(Order_id: "+order_id+" , Item_id: "+item_id+") is not exist")
-                            resolve({msg: `Success Update Order: { id: ${order_id} }, Item: { id: ${item_id} , num: ${update_num}}`})
-                        }
+                            resolve(`Success Update Order: { id: ${order_id} }, Item: { id: ${item_id} , num: ${update_num}}`)
+                       
                     }
                 })
         }
     })
 }
-function search_ByUser (user_id){
+
+function search (user_id){
     return new Promise((resolve,reject)=>{
         let query_params = [user_id]
         db.query("SELECT * FROM orders_table WHERE user_id = ?;",
         query_params,
         (error,rowPacket)=>{
             if(error){
-                error_show(error,"search_ByUser")
-                reject({error:error})
+                error_show(error,"search")
+                resolve({error:error})
             }else{
                 //console.log(rowPacket);
-                resolve(rowPacket)
+                resolve({data : JSON.stringify(rowPacket)})
             }
         })
     })
@@ -278,7 +355,7 @@ function search_ByUser (user_id){
 }
 //for test
 //orders_table update  
-function update(order_id,new_order_id){
+/*function update(order_id,new_order_id){
     let query_params = [new_order_id,order_id]
     db.query(
         "UPDATE orders_table SET order_id = ? WHERE order_id = ?;",
@@ -287,21 +364,119 @@ function update(order_id,new_order_id){
             //code: 'ER_DUP_ENTRY',errno: 1062,sqlMessage: "Duplicate entry '12' for key 'orders_table.PRIMARY'",
             if(error){
                 error_show(error,"update")
+                resolve({error:error})
             }else if(okPacket.affectedRows == 0){
-                console.log("Order_id: "+order_id+" is not exist")
+                let msg = `Order_id: ${order_id} is not exist`
+                //console.log("Order_id: "+order_id+" is not exist")
+                resolve(msg)
             }
         })
-}
-function search (order_id){
-    let query_params = [order_id]
-    db.query("SELECT * FROM orders_table WHERE order_id = ?;",
-    query_params,
-    (error,rows)=>{
-        error_show(error,"show")
-        console.log(rows);    
+}*/
+function search_detail (query_data){
+    //let query_params = [order_id]
+    console.log(query_data)
+    return new Promise((resolve,reject)=>{
+        let params_data = get_query(query_data)
+        let query_params = [`${params(params_data)}`]
+        console.log(query_params)
+        db.query("SELECT * FROM ordersdetails "+query_params,
+        (error,rowPacket)=>{
+            if(error){
+                error_show(error,"show")
+                resolve({error:error})
+            }else{
+                resolve({data : JSON.stringify(rowPacket)})
+            }
+        })
     })
 }
+async function result(msg){
+    try{
 
+        let data = await all()
+        data.msg = msg
+
+        return data
+    }catch(error){
+        return error
+    }
+    //return data
+}
+async function result_detail(msg){
+    try{
+        let data = await all_detail()
+        data.msg = msg
+        return data
+    }catch(error){
+        return error
+    }
+    //return data
+}
+function params(data){
+    let query_string =" "
+    for(let index = 0,  where_and = "WHERE "; index < data.length; index++){
+        query_string += where_and
+        if(index == 0){
+            where_and = "AND "
+        }
+        query_string +=`${data[index].key}`
+        query_string +=` ${data[index].mode} `
+        query_string += `${data[index].value} ` 
+    }
+    return query_string
+}
+function get_query(query){
+    let params_data = []
+    let keys=Object.keys(query)
+    //console.log(query)
+    //console.log(Object.entries(query))
+    keys.forEach((key)=>{
+      let data_key
+      let data_value = query[key]
+      let data_mode = "="
+      switch(key){
+        case "id":
+          data_key=`${table}_id`
+          break;
+        case "name":
+          data_key=`${table}_name`
+          data_value = '"'+data_value+'"'
+          break;
+        case "name_like":
+          data_key=`${table}_name`
+          data_value = "'%"+data_value+"%'"
+          data_mode = "LIKE"
+          break
+        case "account":
+          data_key=`${table}_account`
+          data_value = '"'+data_value+'"'
+          break;
+        case "account_like":
+          data_key=`${table}_account`
+          data_value = "'%"+data_value+"%'"
+          data_mode = "LIKE"
+          break;
+        case "password":
+            data_key=`${table}_account`
+            data_value = '"'+data_value+'"'
+            break
+        case "num":
+            data_key = "item_num"
+        case "min":
+          data_key=`${table}_price`
+          data_mode = ">="
+          break;
+        case "max":
+          data_key=`${table}_price`
+          data_mode = "<="
+          break;
+        default:
+            data_key = key
+      }
+      params_data.push({key:data_key,value:data_value,mode:data_mode})
+    })
+    return params_data
+}
 function error_show(error,type){
     if(error){
         console.log("order."+type +"() error:\n"+ error)
@@ -317,9 +492,11 @@ module.exports ={
     add_details,
     del_all,
     del_detail,
+    del_detail_all,
     update_detail,
-    search_ByUser,
-    //update,//test
+    search,
+    search_detail,
+    update,//test
     //search//test
    
     /*update*/

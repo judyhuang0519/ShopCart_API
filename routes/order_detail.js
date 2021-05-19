@@ -24,6 +24,20 @@ router.get('/', function(req, res, next) {
   next()
   //res.send('respond with a resource');
 });
+router.get('/del', function(req, res, next) {
+  if(req.query.id){
+    console.log("order del request")
+    order.del_detail(req.query.id)
+    .then((result)=>{
+      res.json(result)
+    })
+  }else{
+    console.log("order delall request")
+    /*order.del_all().then((result)=>{
+      res.json(result)
+    })*/
+  }
+});
 router.use(function(req,res,next){
   order.all_detail()
   .then((orders)=>{

@@ -9,7 +9,7 @@ function show  (db){
         console.log(rows);    
     })
 }
-
+const table ="user"
 function all (){
     return new Promise((resolve,reject)=>{
         db.query(
@@ -17,7 +17,7 @@ function all (){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"all")
-                    reject({error:error});
+                    resolve({error:error});
                 }else{
                     resolve({ data : JSON.stringify(rowPacket) });    
                 }
@@ -25,22 +25,24 @@ function all (){
     })
 }
 
-function del(account){
+function del(user_account){
     return new Promise((resolve,reject)=>{
-        let query_params = [account]
+        let query_params = [user_account]
         db.query(
             "DELETE FROM users_table WHERE user_account= ?;",
             query_params,
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del")
-                    reject({error: error})
+                    resolve({error: error})
                 }else{
                     if(okPacket.affectedRows == 0){
                         //console.log("Item id: "+item_id+" is not exist")
-                        resolve({msg: `User: { id: ${user_id} } is not exist`})
+                        let msg = {msg: `User: { account: ${user_account} } is not exist`}
+                        resolve(msg)
                     }else{
-                        resolve({msg: `Success Delete User: { id: ${user_id} }`})
+                        let msg = {msg: `Success Delete User: { account: ${user_account} }`}
+                        resolve(result(msg))
                     }
                 }
             })
@@ -55,7 +57,7 @@ function del_all(){
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"del_all_count")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log(rowPacket)
                     console.log(rowPacket[0]['COUNT(*)'] + " user exist")
@@ -67,7 +69,7 @@ function del_all(){
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"del_all_delete")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log("Success Delete "+okPacket.affectedRows+" users")
                     delMsg += `Success Delete ${okPacket.affectedRows} users`
@@ -78,11 +80,12 @@ function del_all(){
             (error)=>{
                 if(error){
                     error_show(error,"del_all_alter")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     console.log("Success Alter AUTO_INCREMENT to 1")
                     delMsg += "Success Alter users_table AUTO_INCREMENT to 1"
-                    resolve(delMsg)
+                    let msg = {msg:delMsg}
+                    resolve(result(msg))
                 }
             })   
     })
@@ -103,9 +106,10 @@ function add(user_account, user_password){
                 //code: 'ER_DUP_ENTRY',errno: 1062,sqlMessage: "Duplicate entry '12' for key 'orders_table.PRIMARY'",
                 if(error){
                     error_show(error,"add")
-                    reject({error:error}) 
+                    resolve({error:error}) 
                 }else{
-                    resolve({msg: `Success Insert User: { account: ${user_account} , password: ${user_password} }`})
+                    let msg = {msg: `Success Insert User: { account: ${user_account} , password: ${user_password} }`}
+                    resolve(result(msg))
                 }
             })    
     })
@@ -128,20 +132,22 @@ function add(user_account, user_password){
 }*/
 function update(user_account,new_password){
     return new Promise((resolve, reject)=>{
-        let query_params = [new_password,account]
+        let query_params = [new_password,user_account]
         db.query(
             "UPDATE users_table SET user_password = ? WHERE user_account = ?;",
             query_params,
             (error,okPacket)=>{
                 if(error){
                     error_show(error,"update")
-                    reject({error:error})
+                    resolve({error:error})
                 }else{
                     if(okPacket.affectedRows == 0){
+                        let msg = {msg: `User: { account: ${user_account} } is not exist`}
                         //console.log("Item id: "+item_id+" is not exist")
-                        resolve({msg: `User: { account: ${user_account} } is not exist`})
+                        resolve(msg)
                     }else{
-                        resolve({msg: `Success Update User: { account: ${user_account} , password: ${new_password} }`})
+                        let msg = {msg: `Success Update User: { account: ${user_account} , password: ${new_password} }`}
+                        resolve(result(msg))
                     }
                 }
         })
@@ -160,53 +166,132 @@ function update(user_account,new_password){
             }
         })
 }*/
-function search (user_id){
+function search_ById (user_id){
     return new Promise((resolve,reject)=>{
         var query_params = [user_id]
         db.query(
-            "SElECT user_id FROM users_table WHERE user_id= ?;",
+            "SElECT * FROM users_table WHERE user_id= ?;",
             query_params,
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"search")
-                    reject({error:error});
+                    resolve({error:error});
                 }
                 else{
                      if(rowPacket.length != 0){
                         //console.log("User: "+account+" already exist")
-                        resolve(rowPacket)
+                        resolve({data : JSON.stringify(rowPacket)})
                     }else{
                         //console.log("User: "+account+" is not exist")
-                        resolve({msg: `User: { id: ${user_id} } is not exist`})
+                        let msg = {msg: `User: { id: ${user_id} } is not exist`}
+                        resolve(msg)
                     }
                 }
         })  
     })
 }
-function search_ByAccount (user_account){
+function search (query_data){
     return new Promise((resolve,reject)=>{
-        var query_params = [user_account]
+        //var query_params = [user_account]
+        console.log("&&&")
+        let params_data = get_query(query_data)
+        console.log(params_data)
+        let query_params = [`${params(params_data)}`]
+        console.log(query_params)
+        console.log("&&&")
         db.query(
-            "SElECT user_account FROM users_table WHERE user_account= ?;",
-            query_params,
+            "SElECT * FROM users_table " + query_params,
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"search_ByAccount")
-                    reject({error:error});
+                    resolve({error:error});
                 }
                 else{
                      if(rowPacket.length != 0){
                         //console.log("User: "+account+" already exist")
-                        resolve(rowPacket)
+                        resolve({data : JSON.stringify(rowPacket)})
                     }else{
                         //console.log("User: "+account+" is not exist")
-                        resolve({msg: `User: { account: ${user_account} } is not exist`})
+                        let msg = {msg: `User: { account:  } is not exist`}
+                        resolve(msg)
                     }
                 }
         })  
     })
 }
-
+async function result(msg){
+    try{
+        let data = await all()
+        data = {...data, msg}
+        return data
+    }catch(error){
+        return error
+    }
+    //return data
+}
+function params(data){
+    let query_string =" "
+    for(let index = 0,  where_and = "WHERE "; index < data.length; index++){
+        query_string += where_and
+        if(index == 0){
+            where_and = "AND "
+        }
+        query_string +=`${data[index].key}`
+        query_string +=` ${data[index].mode} `
+        query_string += `${data[index].value} ` 
+    }
+    return query_string
+}
+function get_query(query){
+    let params_data = []
+    let keys=Object.keys(query)
+    keys.forEach((key)=>{
+      let data_key
+      let data_value = query[key]
+      let data_mode = "="
+      switch(key){
+        case "id":
+          data_key=`${table}_id`
+          break;
+        case "name":
+          data_key=`${table}_name`
+          data_value = '"'+data_value+'"'
+          break;
+        case "name_like":
+          data_key=`${table}_name`
+          data_value = "'%"+data_value+"%'"
+          data_mode = "LIKE"
+          break
+        case "account":
+          data_key=`${table}_account`
+          data_value = '"'+data_value+'"'
+          break;
+        case "account_like":
+          data_key=`${table}_account`
+          data_value = "'%"+data_value+"%'"
+          data_mode = "LIKE"
+          break;
+        case "password":
+            data_key=`${table}_account`
+            data_value = '"'+data_value+'"'
+            break
+        case "num":
+            data_key = "item_num"
+        case "min":
+          data_key=`${table}_price`
+          data_mode = ">="
+          break;
+        case "max":
+          data_key=`${table}_price`
+          data_mode = "<="
+          break;
+        default:
+            data_key = key
+      }
+      params_data.push({key:data_key,value:data_value,mode:data_mode})
+    })
+    return params_data
+}
 function error_show(error,type){
     if(error){
         console.log("user."+type +"() error:\n"+ error)
@@ -222,8 +307,5 @@ module.exports ={
     del_all,
     add,   
     update,
-    //search,
-    search_ByAccount
- 
-    
+    search, 
 }

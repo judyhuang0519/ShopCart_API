@@ -3,8 +3,11 @@ var router = express.Router();
 //var user = require('./user_module')
 //var user = require('../dbmodules/user_module')
 var item = require('../dbmodules/item_module')
+var order = require('../dbmodules/order_module')
+
 //var order = require('../dbmodules/order_module')
 var mysql      = require('mysql');
+const { request } = require('express');
 var db = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -20,40 +23,99 @@ db.connect((error)=>{
     console.log("Item DB Success")
   }
 });
-
+//const table = "item"
+/*router.get('/all', function(req, res, next) {
+  console.log("get Item request")
+  item.all()
+  .then((items)=>{
+    //console.log(result.data)
+    res.json(items)
+  })
+});
 /* GET users listing. */
-router.get('/del', function(req, res, next) {
-  if(req.query.id){
-    console.log("item del request")
-    item.del(req.query.id)
+
+router.post('/',function(req, res, next){
+  console.log("item add request")
+  console.log(req.body)
+  let name = req.body.name
+  let price = req.body.price
+  if( (isNaN(Number(price))) || (Number(price)<=0) || (`${Number(price)}`.length >9)){
+    res.json({msg:"Invalid price"})
+  }else if (name == ""||!name){
+    res.json({msg:"Invalid name"})
+  }else{
+    item.add(name,price)
     .then((result)=>{
       res.json(result)
-    }).catch((error)=>{
-      res.json(error)
+    })
+  } 
+  //next()
+})
+
+router.get('/', function(req, res, next) {
+  console.log("item search request")
+  console.log(req.query)
+  if(Object.keys(req.query).length!=0){
+    item.search(req.query)
+    .then((result)=>{
+      res.json(result)
     })
   }else{
-    console.log("item delall request")
-    item.del_all().then((result)=>{
+    item.all()
+    .then((result)=>{
       res.json(result)
-    }).catch((error)=>{
-      res.json(error)
     })
   }
+
 });
-router.post('/add', function(req, res, next) {
-  //console.log("item add request")
-  //console.log(req.body)
-  next()
+//
+router.delete('/', function(req, res, next) {
+    console.log("item del request")
+    console.log(req.query)
+    if(Object.keys(req.query).length!=0){
+      console.log("%")
+      item.del(req.query)
+      .then((result)=>{
+        res.json(result)
+      })
+    }else{
+      item.del_all()
+      .then((result)=>{
+        res.json(result)
+      })
+   }
 });
+//
+router.patch('/',function(req, res, next){
+  console.log("item update request")
+  console.log(req.body)
+  let id = req.body.id
+  let name = req.body.name
+  let price = req.body.price
+  if( (isNaN(Number(price))) || (Number(price)<=0) || (`${Number(price)}`.length >9)){
+    //console.log((isNaN(Number(price))))
+    res.json({msg:"Invalid price"})
+  }else if ((name == ""||!name) && (price == ""||!price)){
+    res.json({msg:"Invalid input"})
+  }else{
+    item.update(id,name,price)
+    .then((result)=>{
+      res.json(result)
+    })
+  } 
+
+})
+
+
 /*router.post("/",function(req, res,next) {
   console.log("postItems request");
   console.log(req.body);
 
-  order.add(8,req.body)
+  order.add(1,req.body)
  
   res.json({PS:00}); 
-});
-*/
+});*/
+
 
 router.use(function(req,res,next){
   //console.log("QQ")
@@ -62,4 +124,5 @@ router.use(function(req,res,next){
     res.json(items)
   })
 });
+
 module.exports = router;
