@@ -9,7 +9,7 @@ function show  (db){
         console.log(rows);    
     })
 }
-
+const table ="user"
 function all (){
     return new Promise((resolve,reject)=>{
         db.query(
@@ -166,7 +166,7 @@ function update(user_account,new_password){
             }
         })
 }*/
-function search (user_id){
+function search_ById (user_id){
     return new Promise((resolve,reject)=>{
         var query_params = [user_id]
         db.query(
@@ -190,12 +190,17 @@ function search (user_id){
         })  
     })
 }
-function search_ByAccount (user_account){
+function search (query_data){
     return new Promise((resolve,reject)=>{
-        var query_params = [user_account]
+        //var query_params = [user_account]
+        console.log("&&&")
+        let params_data = get_query(query_data)
+        console.log(params_data)
+        let query_params = [`${params(params_data)}`]
+        console.log(query_params)
+        console.log("&&&")
         db.query(
-            "SElECT * FROM users_table WHERE user_account= ?;",
-            query_params,
+            "SElECT * FROM users_table " + query_params,
             (error,rowPacket)=>{
                 if(error){
                     error_show(error,"search_ByAccount")
@@ -207,7 +212,7 @@ function search_ByAccount (user_account){
                         resolve({data : JSON.stringify(rowPacket)})
                     }else{
                         //console.log("User: "+account+" is not exist")
-                        let msg = {msg: `User: { account: ${user_account} } is not exist`}
+                        let msg = {msg: `User: { account:  } is not exist`}
                         resolve(msg)
                     }
                 }
@@ -224,6 +229,69 @@ async function result(msg){
     }
     //return data
 }
+function params(data){
+    let query_string =" "
+    for(let index = 0,  where_and = "WHERE "; index < data.length; index++){
+        query_string += where_and
+        if(index == 0){
+            where_and = "AND "
+        }
+        query_string +=`${data[index].key}`
+        query_string +=` ${data[index].mode} `
+        query_string += `${data[index].value} ` 
+    }
+    return query_string
+}
+function get_query(query){
+    let params_data = []
+    let keys=Object.keys(query)
+    keys.forEach((key)=>{
+      let data_key
+      let data_value = query[key]
+      let data_mode = "="
+      switch(key){
+        case "id":
+          data_key=`${table}_id`
+          break;
+        case "name":
+          data_key=`${table}_name`
+          data_value = '"'+data_value+'"'
+          break;
+        case "name_like":
+          data_key=`${table}_name`
+          data_value = "'%"+data_value+"%'"
+          data_mode = "LIKE"
+          break
+        case "account":
+          data_key=`${table}_account`
+          data_value = '"'+data_value+'"'
+          break;
+        case "account_like":
+          data_key=`${table}_account`
+          data_value = "'%"+data_value+"%'"
+          data_mode = "LIKE"
+          break;
+        case "password":
+            data_key=`${table}_account`
+            data_value = '"'+data_value+'"'
+            break
+        case "num":
+            data_key = "item_num"
+        case "min":
+          data_key=`${table}_price`
+          data_mode = ">="
+          break;
+        case "max":
+          data_key=`${table}_price`
+          data_mode = "<="
+          break;
+        default:
+            data_key = key
+      }
+      params_data.push({key:data_key,value:data_value,mode:data_mode})
+    })
+    return params_data
+}
 function error_show(error,type){
     if(error){
         console.log("user."+type +"() error:\n"+ error)
@@ -239,8 +307,5 @@ module.exports ={
     del_all,
     add,   
     update,
-    search,
-    search_ByAccount
- 
-    
+    search, 
 }

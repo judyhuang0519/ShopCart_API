@@ -141,7 +141,9 @@ Price Checking Move to Front-Ended
 */
 
 function add(item_name, item_price){
+    //let data = {"name":"www","price":10}
     return new Promise((resolve, reject)=>{
+        //let query_params = ["www",10]
         let query_params = [item_name,parseFloat(item_price).toFixed(2)]
         db.query(
             "INSERT INTO items_table (item_name, item_price) value(? , ?);",
@@ -160,9 +162,26 @@ function add(item_name, item_price){
 }
 function update(item_id, new_name, new_price){
     return new Promise((resolve, reject)=>{
-        let query_params = [ new_name, new_price,item_id]
+        let query_params =[]
+        let query_string = ""
+        if(new_name!=""){
+            console.log("A")
+            query_params.push(new_name)
+            query_string = "item_name = ?"
+        }
+        if(new_price!=""&&new_price)
+        {
+            console.log("B")
+            query_params.push(new_price)
+            if(query_string.length!=0){
+                query_string+=" , "
+            }
+            query_string +="item_price = ?"
+        }
+        query_params.push(item_id)
+        //let query_params = [ new_name, new_price,item_id]
         db.query(
-            "UPDATE items_table SET item_name = ?,item_price = ? WHERE item_id = ?;",
+            "UPDATE items_table SET "+query_string+" WHERE item_id = ?;",
             query_params,
             (error,okPacket)=>{
                 if(error){
@@ -265,19 +284,6 @@ function search_ByPrice (min, max){
         })  
     })
 }
-function params(data){
-    let query_string =" "
-    for(let index = 0,  where_and = "WHERE "; index < data.length; index++){
-        query_string += where_and
-        if(index == 0){
-            where_and = "AND "
-        }
-        query_string +=`${data[index].key}`
-        query_string +=` ${data[index].mode} `
-        query_string += `${data[index].value} ` 
-    }
-    return query_string
-}
 async function result(msg){
     try{
         console.log(msg)
@@ -290,6 +296,19 @@ async function result(msg){
         return error
     }
     //return data
+}
+function params(data){
+    let query_string =" "
+    for(let index = 0,  where_and = "WHERE "; index < data.length; index++){
+        query_string += where_and
+        if(index == 0){
+            where_and = "AND "
+        }
+        query_string +=`${data[index].key}`
+        query_string +=` ${data[index].mode} `
+        query_string += `${data[index].value} ` 
+    }
+    return query_string
 }
 function get_query(query){
     let params_data = []
@@ -330,11 +349,11 @@ function get_query(query){
             data_key = "item_num"
         case "min":
           data_key=`${table}_price`
-          data_mode = "<="
+          data_mode = ">="
           break;
         case "max":
           data_key=`${table}_price`
-          data_mode = ">="
+          data_mode = "<="
           break;
         default:
             data_key = key

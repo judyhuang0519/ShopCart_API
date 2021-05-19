@@ -30,23 +30,7 @@ router.get('/',async function(req, res, next) {
     if(mode){
       console.log("Q")
     }
-    item.search_params()
-    //order.del_all()
-    /*await order.add(8,{
-      '0': { item_id: 10, item_name: 'item5', item_price: 50, num: 2 },
-      '1': { item_id: 3, item_name: 'item3', item_price: 30, num: 1 },
-      '2': { item_id: 2, item_name: 'item2', item_price: 20, num: 1 }
-    })*/
-    //order.add()
-    //order.del_all(db)
-    //item.search_price(100,100,db)
-    //item.add("item5",50,db)
-    //user.search("test",db)
-    
-    //console.log("aa")
-    //user.add("rrr","777")
-    //user.delete("aaa",db)
-    //console.log("a")
+    item.update(3,"yy","15")
     table_show(res)
 
     //table_show(res, "oders_table")
